@@ -19,16 +19,4 @@ public class LockList {
             }
         }
     }
-    /*
-    public static void main(String[] args) throws Exception
-    {
-        Stream<ProcessHandle> processStream = ProcessHandle.allProcesses();
-        ArrayList<ProcessHandle> processList = new ArrayList<ProcessHandle>(processStream.collect(Collectors.toList()));
-        for (ProcessHandle process: processList) {
-            if (process.info().toString().indexOf("chrome.exe") > -1) {
-                process.destroy();
-            }
-        }
-    }
-    */
 }
