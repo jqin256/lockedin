@@ -12,20 +12,22 @@ public class AppList {
     public void setAppList() {
         ArrayList<String> result = new ArrayList<String>();
         Process p;
-        try {
-            String[] cmd = {"winget", "ls"};
-            p = Runtime.getRuntime().exec(cmd);
-            BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line = "";
-            while ((line = input.readLine()) != null) {
-                result.add(line);
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            try {
+                String[] cmd = {"winget", "ls"};
+                p = Runtime.getRuntime().exec(cmd);
+                BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                String line = "";
+                while ((line = input.readLine()) != null) {
+                    result.add(line);
+                }
+                p.waitFor();
             }
-            p.waitFor();
+            catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+            apps = result;
         }
-        catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        apps = result;
     }
 
     public ArrayList<String> getInstalledApps() {
