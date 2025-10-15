@@ -1,139 +1,132 @@
 package productivityappcac;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Application;
+import javafx.geometry.*;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
-public class VisualTimer extends JFrame {
+public class VisualTimer extends Application {
     private int timeLeft; // seconds
-    private Timer timer;
-    private JLabel timeLabel;
-    private JButton startButton, pauseButton, resetButton, setButton;
-    private JButton plusButton, minusButton;
-    private JTextField setTimeField;
+    private Timeline timeline;
+    private Label timeLabel;
+    private TextField setTimeField;
 
-    public VisualTimer() {
-        super("Visual Timer");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(350, 250);
-        setLayout(new BorderLayout());
+    private Button startButton, pauseButton, resetButton, setButton, plusButton, minusButton;
 
-        // Display
-        timeLabel = new JLabel("00:00", SwingConstants.CENTER);
-        timeLabel.setFont(new Font("Serif", Font.BOLD, 40));
-        add(timeLabel, BorderLayout.CENTER);
-
-        // Main Controls
-        JPanel controlPanel = new JPanel();
-        startButton = new JButton("Start");
-        pauseButton = new JButton("Pause");
-        resetButton = new JButton("Reset");
-
-        controlPanel.add(startButton);
-        controlPanel.add(pauseButton);
-        controlPanel.add(resetButton);
-
-        add(controlPanel, BorderLayout.SOUTH);
-
-        // Set Time Panel
-        JPanel setPanel = new JPanel();
-        setPanel.add(new JLabel("Set (sec):"));
-        setTimeField = new JTextField(5);
-        setButton = new JButton("Set");
-        setPanel.add(setTimeField);
-        setPanel.add(setButton);
-
-        add(setPanel, BorderLayout.NORTH);
-
-        // Adjustment Panel
-        JPanel adjustPanel = new JPanel();
-        plusButton = new JButton("+1 min");
-        minusButton = new JButton("-1 min");
-        adjustPanel.add(plusButton);
-        adjustPanel.add(minusButton);
-
-        add(adjustPanel, BorderLayout.EAST);
+    @Override
+    public void start(Stage stage) {
+        // Main Label
+        timeLabel = new Label("00:00");
+        timeLabel.setFont(Font.font("Serif", 40));
+        timeLabel.setMinWidth(200);
+        timeLabel.setAlignment(Pos.CENTER);
 
         // Timer logic
-        timer = new Timer(1000, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateLabel();
-                } else {
-                    timer.stop();
-                    JOptionPane.showMessageDialog(null, "Time's Up!");
-                }
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateLabel();
+            } else {
+                timeline.stop();
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Time's Up!");
+                alert.setHeaderText(null);
+                alert.setContentText("Time's Up!");
+                alert.showAndWait();
+            }
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+
+        // Controls
+        startButton = new Button("Start");
+        pauseButton = new Button("Pause");
+        resetButton = new Button("Reset");
+
+        startButton.setOnAction(e -> {
+            if (timeLeft > 0 && timeline.getStatus() != Timeline.Status.RUNNING) {
+                timeline.play();
             }
         });
 
-        // Listeners
-        startButton.addActionListener(e -> {
-            if (!timer.isRunning() && timeLeft > 0) {
-                timer.start();
-            }
-        });
+        pauseButton.setOnAction(e -> timeline.pause());
 
-        pauseButton.addActionListener(e -> {
-            if (timer.isRunning()) {
-                timer.stop();
-            }
-        });
-
-        resetButton.addActionListener(e -> {
-            timer.stop();
+        resetButton.setOnAction(e -> {
+            timeline.stop();
             timeLeft = 0;
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            Label();
+            updateLabel();
         });
 
-        setButton.addActionListener(e -> {
+        HBox controlBox = new HBox(10, startButton, pauseButton, resetButton);
+        controlBox.setAlignment(Pos.CENTER);
+
+        // Set Time Panel
+        Label setLabel = new Label("Set (sec):");
+        setTimeField = new TextField();
+        setTimeField.setPrefWidth(80);
+        setButton = new Button("Set");
+        HBox setBox = new HBox(10, setLabel, setTimeField, setButton);
+        setBox.setAlignment(Pos.CENTER);
+
+        setButton.setOnAction(e -> {
             try {
                 int newTime = Integer.parseInt(setTimeField.getText());
                 timeLeft = newTime;
                 updateLabel();
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Enter a valid number!");
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Invalid Input");
+                alert.setHeaderText(null);
+                alert.setContentText("Please enter a valid number!");
+                alert.showAndWait();
             }
         });
 
-        plusButton.addActionListener(e -> {
+        // Adjustment Panel
+        plusButton = new Button("+1 min");
+        minusButton = new Button("-1 min");
+        VBox adjustBox = new VBox(10, plusButton, minusButton);
+        adjustBox.setAlignment(Pos.CENTER_RIGHT);
+        adjustBox.setPadding(new Insets(10));
+
+        plusButton.setOnAction(e -> {
             timeLeft += 60;
             updateLabel();
         });
 
-        minusButton.addActionListener(e -> {
+        minusButton.setOnAction(e -> {
             if (timeLeft >= 60) {
                 timeLeft -= 60;
             } else {
                 timeLeft = 0;
-                timer.stop();
+                timeline.stop();
             }
             updateLabel();
         });
 
-        setVisible(true);
+        // Layout
+        BorderPane root = new BorderPane();
+        root.setCenter(timeLabel);
+        root.setBottom(controlBox);
+        root.setTop(setBox);
+        root.setRight(adjustBox);
+        BorderPane.setMargin(controlBox, new Insets(10));
+        BorderPane.setMargin(setBox, new Insets(10));
+
+        Scene scene = new Scene(root, 350, 250);
+        stage.setTitle("Visual Timer");
+        stage.setScene(scene);
+        stage.show();
     }
 
     private void updateLabel() {
         int minutes = timeLeft / 60;
         int seconds = timeLeft % 60;
         timeLabel.setText(String.format("%02d:%02d", minutes, seconds));
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new VisualTimer());
     }
 }
