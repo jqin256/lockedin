@@ -55,6 +55,7 @@ public class Settings extends Application {
         stage.setScene(genScene);
         stage.show();
 
+        //Locked apps code
         //move app processing to main file
         ListView<String> apps = new ListView<String>();
         apps.setPrefWidth(700);
@@ -96,7 +97,8 @@ public class Settings extends Application {
         }
 
         apps.setItems(appNames);
-        VBox appSettings = new VBox(apps);
+        lockedAppsExplanation = new Text("Select the apps you would like to lock below. Hold Ctrl while clicking to select multiple apps.");
+        VBox appSettings = new VBox(lockedAppsExplanation, apps);
         apps.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         
         apps.setOnMouseClicked(e -> {
@@ -112,7 +114,7 @@ public class Settings extends Application {
             selectedLockList.setLockList(selectedApps);
             //System.out.println(selectedLockList.getLockList());
         });
-        
+
         genButton.setOnAction(e -> {
             stage.getScene().setRoot(new AnchorPane(categories, genSettings));
         });
