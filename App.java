@@ -5,24 +5,20 @@ public class App {
         
     }
 
-    protected void outputToApp(String output) {
+    public void outputToApp(String output) {
         if (System.getProperty("os.name").startsWith("Windows")) {
-            if ((output.indexOf("  ") < output.indexOf("? ")) || output.indexOf("? ") == -1) {
-                name = output.substring(0, output.indexOf("  "));
-                output = output.substring(output.indexOf("  ") + 2);
-                
-            }
-            else {
-                name = output.substring(0, output.indexOf("? "));
-                id = output.substring(output.indexOf("? ") + 2, output.substring(output.indexOf("? ") + 2).indexOf(Math.min(output.indexOf("  "), output.indexOf("? "))));
-            }
+                //38 is where "?" appears if it does in winget output
+                if (output.length() > 0) {
+                    name = output.substring(0, 38).strip();
+                    id = output.substring(40,  78).strip();
+                }
         }
     }
-
-    protected String getName() {
+    //consider making protected
+    public String getName() {
         return name;
     }
-    protected String getId() {
+    public String getId() {
         return id;
     }
 }

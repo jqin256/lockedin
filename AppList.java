@@ -3,14 +3,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-//applist as given from Windows command line
 public class AppList {
     private ArrayList<String> apps;
     public AppList () {
         
     }
 
-    public void setAppList() {
+    public void retrieveAppList() {
         ArrayList<String> result = new ArrayList<String>();
         Process p;
         if (System.getProperty("os.name").startsWith("Windows")) {
