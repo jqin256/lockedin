@@ -77,8 +77,8 @@ public class WelcomeScreen extends Application {
         fadeIn.play();
 
         // Button actions (temporary placeholders)
-        timerButton.setOnAction(e -> primaryStage.getScene().setRoot(timer.getRoot()));
-        settingsButton.setOnAction(e -> primaryStage.getScene().setRoot(settingsPage.genRoot()));
+        timerButton.setOnAction(e -> timer.start(primaryStage));
+        settingsButton.setOnAction(e -> settingsPage.start(primaryStage));
 
         primaryStage.show();
     }
