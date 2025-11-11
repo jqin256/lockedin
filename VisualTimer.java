@@ -1,5 +1,3 @@
-package productivityappcac;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -18,7 +16,7 @@ public class VisualTimer extends Application {
     private TextField setTimeField;
 
     private Button startButton, pauseButton, resetButton, setButton, plusButton, minusButton;
-
+    private BorderPane root;
     @Override
     public void start(Stage stage) {
         // Main Label
@@ -110,7 +108,7 @@ public class VisualTimer extends Application {
         });
 
         // Layout
-        BorderPane root = new BorderPane();
+        root = new BorderPane();
         root.setCenter(timeLabel);
         root.setBottom(controlBox);
         root.setTop(setBox);
@@ -128,5 +126,9 @@ public class VisualTimer extends Application {
         int minutes = timeLeft / 60;
         int seconds = timeLeft % 60;
         timeLabel.setText(String.format("%02d:%02d", minutes, seconds));
+    }
+
+    public BorderPane getRoot() {
+        return root;
     }
 }

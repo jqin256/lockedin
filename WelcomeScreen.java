@@ -1,5 +1,3 @@
-package productivityappcac;
-
 import javafx.animation.*;
 import javafx.application.Application;
 import javafx.beans.property.ObjectProperty;
@@ -17,12 +15,17 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class WelcomeScreen extends Application {
+    private Settings settingsPage;
+    private VisualTimer timer;
+    public WelcomeScreen (VisualTimer v, Settings s)
+    {
+        timer = v;
+        settingsPage = s;
+    }
     
-    // public WelcomeScreen (Settings s)
-    // {
-    //     settingsPage = s;
-    // }
-    private Settings settingsPage = new Settings();
+    public WelcomeScreen() {
+
+    }
     @Override   
     public void start(Stage primaryStage) {
         primaryStage.setTitle("LockedIn - Welcome");
@@ -74,8 +77,8 @@ public class WelcomeScreen extends Application {
         fadeIn.play();
 
         // Button actions (temporary placeholders)
-        timerButton.setOnAction(e -> showMessage("Navigating to My Timer..."));
-        //settingsButton.setOnAction(e -> primaryStage.getScene().setRoot(settingsPage.genRoot()));
+        timerButton.setOnAction(e -> primaryStage.getScene().setRoot(timer.getRoot()));
+        settingsButton.setOnAction(e -> primaryStage.getScene().setRoot(settingsPage.genRoot()));
 
         primaryStage.show();
     }
