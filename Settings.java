@@ -18,7 +18,9 @@ public class Settings extends Application {
     private MenuButton themeMenuButton;
     private String theme;
     private LockList selectedLockList = new LockList();
-    
+    private ObservableList<String> appNames;
+    private VBox categories;
+    private VBox genSettings;
     public void start(Stage stage) {
         themeText = new Text("Background Theme");
         MenuItem lightTheme = new MenuItem("Light");
@@ -40,12 +42,12 @@ public class Settings extends Application {
             theme = "Dark";
         });
 
-        VBox genSettings = new VBox(4, themeText, themeMenuButton);
+        genSettings = new VBox(4, themeText, themeMenuButton);
 
         Button genButton = new Button("General");
         Button appsButton = new Button("Locked Apps");
 
-        VBox categories = new VBox(4, genButton, appsButton);
+        categories = new VBox(4, genButton, appsButton);
 
         AnchorPane.setLeftAnchor(categories, 10.0);
         AnchorPane.setLeftAnchor(genSettings, 360.0);
@@ -59,43 +61,6 @@ public class Settings extends Application {
         //move app processing to main file
         ListView<String> apps = new ListView<String>();
         apps.setPrefWidth(700);
-        ObservableList<String> appNames = FXCollections.observableArrayList();
-        AppList appList = new AppList();
-        appList.retrieveAppList();
-        ArrayList<String> appArrayList = appList.getInstalledApps();
-        boolean preApps = true;
-        while (preApps) {
-            if (appArrayList.remove(0).indexOf("--") > -1) {
-                preApps = false;
-            }
-        }
-
-        for (String s: appArrayList) {
-            App a = new App();
-            a.outputToApp(s);
-            appNames.add(a.getName());
-        }
-
-        ArrayList<String> protectedNames = new ArrayList<String>();
-        protectedNames.add("Microsoft");
-        protectedNames.add("Windows");
-        protectedNames.add("Extension");
-        protectedNames.add("Intel");
-        protectedNames.add("Dell");
-
-        int i;
-        for (String s1: protectedNames) {
-            i = 0;
-            while (i < appNames.size()) {
-                if (appNames.get(i).indexOf(s1) != -1) {
-                    appNames.remove(i);
-                }
-                else {
-                    i++;
-                }
-            }
-        }
-
         apps.setItems(appNames);
         lockedAppsExplanation = new Text("Select the apps you would like to lock below. Hold Ctrl while clicking to select multiple apps.");
         VBox appSettings = new VBox(lockedAppsExplanation, apps);
@@ -112,7 +77,6 @@ public class Settings extends Application {
                 }
             }
             selectedLockList.setLockList(selectedApps);
-            //System.out.println(selectedLockList.getLockList());
         });
 
         genButton.setOnAction(e -> {
@@ -131,7 +95,15 @@ public class Settings extends Application {
         });
     }
 
+    public void setAppNames(ObservableList<String> a) {
+        appNames = a;
+    }
+
     public LockList getSelectedLockList() {
         return selectedLockList;
+    }
+
+    public AnchorPane genRoot() {
+        return (new AnchorPane(categories, genSettings));
     }
 }
