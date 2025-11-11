@@ -23,7 +23,7 @@ public class VisualTimer extends Application {
     public void start(Stage stage) {
         // Main Label
         timeLabel = new Label("00:00");
-        timeLabel.setFont(Font.font("Serif", 40));
+        timeLabel.setFont(Font.font("Serif", 100));
         timeLabel.setMinWidth(200);
         timeLabel.setAlignment(Pos.CENTER);
 
