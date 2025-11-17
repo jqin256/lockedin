@@ -51,6 +51,8 @@ public class Main extends Application {
         settingsPage.setAppNames(appNames);
         VisualTimer timerApp = new VisualTimer();
         WelcomeScreen welcomeScreen = new WelcomeScreen(timerApp, settingsPage);
+        settingsPage.setWelcomeScreen(welcomeScreen);
+        timerApp.setWelcomeScreen(welcomeScreen);
 
         
         welcomeScreen.start(primaryStage);

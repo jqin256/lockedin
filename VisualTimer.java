@@ -17,6 +17,13 @@ public class VisualTimer extends Application {
 
     private Button startButton, pauseButton, resetButton, setButton, plusButton, minusButton;
     private BorderPane root;
+    private WelcomeScreen welcomeScreen;
+    public VisualTimer(WelcomeScreen w) {
+        welcomeScreen = w;
+    }
+    public VisualTimer() {
+
+    }
     @Override
     public void start(Stage stage) {
         // Main Label
@@ -59,8 +66,11 @@ public class VisualTimer extends Application {
             timeLeft = 0;
             updateLabel();
         });
-
-        HBox controlBox = new HBox(10, startButton, pauseButton, resetButton);
+        Button homeButton = new Button("Home");
+        homeButton.setOnAction(e -> {
+            welcomeScreen.start(stage);
+        });
+        HBox controlBox = new HBox(10, homeButton, startButton, pauseButton, resetButton);
         controlBox.setAlignment(Pos.CENTER);
 
         // Set Time Panel
@@ -130,5 +140,8 @@ public class VisualTimer extends Application {
 
     public BorderPane getRoot() {
         return root;
+    }
+    public void setWelcomeScreen (WelcomeScreen w) {
+        welcomeScreen = w;
     }
 }

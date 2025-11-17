@@ -12,6 +12,13 @@ import javafx.animation.*;
 import javafx.util.*;
 
 public class Settings extends Application {
+    private WelcomeScreen welcomeScreen;
+    public Settings(WelcomeScreen w) {
+        welcomeScreen = w;
+    }
+    public Settings() {
+        
+    }
     @FXML
     private Button general, lockedApps;
     private Text themeText, lockedAppsExplanation;
@@ -46,11 +53,15 @@ public class Settings extends Application {
 
         Button genButton = new Button("General");
         Button appsButton = new Button("Locked Apps");
-
-        categories = new VBox(4, genButton, appsButton);
-
+        Button homeButton = new Button("Home");
+        homeButton.setOnAction(e -> {
+            welcomeScreen.start(stage);
+        });
+        categories = new VBox(4, homeButton, genButton, appsButton);
+        AnchorPane.setTopAnchor(categories, 20.0);
         AnchorPane.setLeftAnchor(categories, 10.0);
         AnchorPane.setLeftAnchor(genSettings, 360.0);
+        
         Scene genScene = new Scene(new AnchorPane(categories, genSettings), 1080, 720);
         
         stage.setTitle("Settings");
@@ -102,8 +113,7 @@ public class Settings extends Application {
     public LockList getSelectedLockList() {
         return selectedLockList;
     }
-
-    public AnchorPane genRoot() {
-        return (new AnchorPane(categories, genSettings));
+    public void setWelcomeScreen(WelcomeScreen w) {
+        welcomeScreen = w;
     }
 }
