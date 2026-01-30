@@ -1,60 +1,39 @@
 import java.util.ArrayList;
-
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.stage.Stage;
+import java.io.*;
 
 public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
-        ObservableList<String> appNames = FXCollections.observableArrayList();
         AppList appList = new AppList();
-        appList.retrieveAppList();
-        ArrayList<String> appArrayList = appList.getInstalledApps();
-        boolean preApps = true;
-        while (preApps) {
-            if (appArrayList.remove(0).indexOf("--") > -1) {
-                preApps = false;
-            }
+        appList.retrieveAppNames();
+        appList.retrieveAppPaths();
+        File f1 = new File("checkedapps.txt");
+        File f2 = new File("checkednames.txt");
+        File f3 = new File("checkedpaths.txt");
+        if (f1.isFile() && f2.isFile() && f3.isFile()) {
+            appList.loadCheckedPaths();
+            appList.loadCheckedNames();
+            appList.loadCheckedApps();
         }
-
-        for (String s: appArrayList) {
-            App a = new App();
-            a.outputToApp(s);
-            appNames.add(a.getName());
-        }
-
-        ArrayList<String> protectedNames = new ArrayList<String>();
-        protectedNames.add("Microsoft");
-        protectedNames.add("Windows");
-        protectedNames.add("Extension");
-        protectedNames.add("Intel");
-        protectedNames.add("Dell");
-        protectedNames.add("Lenovo");
-        protectedNames.add("HP");
-
-        int i;
-        for (String s1: protectedNames) {
-            i = 0;
-            while (i < appNames.size()) {
-                if (appNames.get(i).indexOf(s1) != -1) {
-                    appNames.remove(i);
-                }
-                else {
-                    i++;
-                }
-            }
-        }
+        appList.saveCheckedPaths();
+        appList.saveCheckedNames();
+        appList.saveCheckedApps();
+        
+        ArrayList<String> appArrayList = appList.getAppNames();
+        ObservableList<String> appNames = FXCollections.observableArrayList(appArrayList);
 
         Settings settingsPage = new Settings();
         settingsPage.setAppNames(appNames);
+        settingsPage.setNameToPath(appList.getNameToPath());
+        
         VisualTimer timerApp = new VisualTimer();
         WelcomeScreen welcomeScreen = new WelcomeScreen(timerApp, settingsPage);
         settingsPage.setWelcomeScreen(welcomeScreen);
         timerApp.setWelcomeScreen(welcomeScreen);
-
-        
         welcomeScreen.start(primaryStage);
     }
 
