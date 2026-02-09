@@ -11,6 +11,7 @@ import java.util.*;
 import javafx.animation.*;
 import javafx.util.*;
 import java.io.*;
+import javafx.collections.transformation.*;
 
 public class Settings extends Application {
     private WelcomeScreen welcomeScreen;
@@ -26,14 +27,15 @@ public class Settings extends Application {
     private MenuButton themeMenuButton;
     private String theme;
     private LockList selectedLockList = new LockList();
-    private ObservableList<String> appNames;
+    private FilteredList<String> appNames;
     private VBox categories;
     private VBox genSettings;
     private ArrayList<String> selectedApps;
-    private VBox appSettings;
     private ListView<String> apps = new ListView<String>();
+    private ListView<String> selectedAppView = new ListView<String>();
     private HashMap<String, String> nameToPath;
     private String[] banList = {".", "Update", "Setup", "Install", "Driver", "Service", "Utility", "Uninstall", "?"};
+    private TreeSet<String> selectedAppNames;
     public void start(Stage stage) {
         themeText = new Text("Background Theme");
         MenuItem lightTheme = new MenuItem("Light");
@@ -81,19 +83,26 @@ public class Settings extends Application {
 
         apps.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         selectedApps = new ArrayList<String>();
+        selectedAppNames = new TreeSet<String>();
+        selectedAppView.setItems(FXCollections.observableArrayList(selectedAppNames));
+        TextField searchBar = new TextField();
+        searchBar.setPromptText("Search here:");
+        searchBar.textProperty().addListener((obs, oldValue, newValue) -> {
+            appNames.setPredicate(s -> s.toLowerCase().contains(newValue.toLowerCase().trim()));
+        });
         try {
             File f = new File("locklist.txt");
             if (f.isFile()) {
                 BufferedReader br = new BufferedReader(new FileReader("locklist.txt"));
                 String line = br.readLine();
-                if (line != null) {
-                    line = line.strip();
-                }
                 while (line != null) {
+                    line = line.strip();
                     apps.getSelectionModel().select(line);
+                    selectedAppNames.add(line);
                     selectedApps.add(nameToPath.get(line));
                     line = br.readLine();
                 }
+                selectedAppView.setItems(FXCollections.observableArrayList(selectedAppNames));
                 br.close();
             }
         }
@@ -108,18 +117,55 @@ public class Settings extends Application {
             try {
                 FileWriter fWriter = new FileWriter("locklist.txt", false);
                 for (String s: selectedItems) {
-                    fWriter.write(s + "\n");
-                    selectedApps.add(nameToPath.get(s));
+                    selectedAppNames.add(s);
                 }
+                Spliterator<String> it = selectedAppNames.spliterator();
+                while (it.tryAdvance(name -> {
+                    try {
+                        fWriter.write(name + "\n");
+                        selectedApps.add(nameToPath.get(name));
+                    }
+                    catch (IOException error) {
+                        System.err.println(error.getMessage());
+                    }
+                }));
                 fWriter.close();
             }
             catch (IOException error) {
                 System.err.println(error.getMessage());
             }
+            selectedAppView.setItems(FXCollections.observableArrayList(selectedAppNames));
             selectedLockList.setLockList(selectedApps);
         });
 
-        VBox appSettings = new VBox(4.0, lockedAppsExplanation, apps);
+        selectedAppView.setOnMouseClicked(e -> {
+            ObservableList<String> selectedItems =  selectedAppView.getSelectionModel().getSelectedItems();
+            for (String s: selectedItems) {
+                selectedAppNames.remove(s);
+                selectedApps.remove(nameToPath.get(s));
+            }
+            selectedAppView.setItems(FXCollections.observableArrayList(selectedAppNames));
+            selectedLockList.setLockList(selectedApps);
+            try {
+                FileWriter fWriter = new FileWriter("locklist.txt", false);
+                Spliterator<String> it = selectedAppNames.spliterator();
+                while (it.tryAdvance(name -> {
+                    try {
+                        fWriter.write(name + "\n");
+                        selectedApps.add(nameToPath.get(name));
+                    }
+                    catch (IOException error) {
+                        System.err.println(error.getMessage());
+                    }
+                }));
+                fWriter.close();
+            }
+            catch (IOException error) {
+                System.err.println(error.getMessage());
+            }
+        });
+
+        VBox appSettings = new VBox(4.0, lockedAppsExplanation, apps, searchBar, selectedAppView);
 
         genButton.setOnAction(e -> {
             stage.getScene().setRoot(new AnchorPane(categories, genSettings));
@@ -150,7 +196,7 @@ public class Settings extends Application {
             }
             if (!removed) i++;
         }
-        appNames = a;
+        appNames = new FilteredList<String>(a);
     }
 
     public void setNameToPath(HashMap<String, String> a) {
