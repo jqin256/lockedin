@@ -62,7 +62,6 @@ public class AppList{
         try {
             for (String s: appPaths) {
                 if (!checkedPaths.contains(s)) {
-                    final long startTime = System.currentTimeMillis();
                     String[] getItemProperties = {"powershell", "\n", "Get-ItemProperty", "\'" + s + "\'", "|", "Format-List"};
                     itemPropertiesProcess = Runtime.getRuntime().exec(getItemProperties);
                     BufferedReader propInput = new BufferedReader(new InputStreamReader(itemPropertiesProcess.getInputStream()));
