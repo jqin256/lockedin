@@ -3,7 +3,6 @@ import java.util.ArrayList;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.media.MediaPlayer;
 import javafx.stage.Stage;
 import java.io.*;
 
@@ -33,15 +32,12 @@ public class Main extends Application {
         settingsPage.setNameToPath(appList.getNameToPath());
         
         VisualTimer timerApp = new VisualTimer();
+        timerApp.setNameToPath(appList.getNameToPath());
+
         WelcomeScreen welcomeScreen = new WelcomeScreen(timerApp, settingsPage);
         settingsPage.setWelcomeScreen(welcomeScreen);
         timerApp.setWelcomeScreen(welcomeScreen);
-<<<<<<< Updated upstream
-=======
         BackgroundMusic.playMusic();
-
-        
->>>>>>> Stashed changes
         welcomeScreen.start(primaryStage);
     }
 

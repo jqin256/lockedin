@@ -1,10 +1,6 @@
-<<<<<<< Updated upstream
-=======
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
->>>>>>> Stashed changes
 import java.util.ArrayList;
 import java.util.Spliterator;
 import java.util.TreeSet;
@@ -21,8 +17,7 @@ public class AppList{
     public AppList() {
         
     }
-    //use dir /s /b *.exe /a:-d | findstr /v .exe. to find all executable files
-    //if app has blank product skip
+
     public void retrieveAppPaths() {
         ArrayList<String> dirs = new ArrayList<String>();
         Process exeFilesProcess;
@@ -131,7 +126,7 @@ public class AppList{
             e.printStackTrace();
         }
     }
-    //need checkedapps to define nameToPath to link checkednames.txt and checkedpaths.txt information
+
     public void saveCheckedApps() {
         try {
             FileWriter fWriter = new FileWriter("checkedapps.txt", false);

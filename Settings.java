@@ -9,8 +9,6 @@ import javafx.scene.shape.*;
 import javafx.scene.*;
 import javafx.collections.*;
 import java.util.*;
-import javafx.animation.*;
-import javafx.util.*;
 import java.io.*;
 import javafx.collections.transformation.*;
 
@@ -29,13 +27,12 @@ public class Settings extends Application {
     private String theme;
     private LockList selectedLockList = new LockList();
     private FilteredList<String> appNames;
-    private VBox categories;
-    private VBox genSettings;
+    private VBox categories, genSettings;
     private ArrayList<String> selectedApps;
     private ListView<String> apps = new ListView<String>();
     private ListView<String> selectedAppView = new ListView<String>();
     private HashMap<String, String> nameToPath;
-    private String[] banList = {".", "Update", "Setup", "Install", "Driver", "Service", "Utility", "Uninstall", "?"};
+    private String[] banList = {".", "Update", "Setup", "Install", "Driver", "Service", "Utility", "Uninstall", "?", "Extension"};
     private TreeSet<String> selectedAppNames;
     public void start(Stage stage) {
         themeText = new Text("Background Theme");
@@ -78,7 +75,8 @@ public class Settings extends Application {
         stage.show();
 
 //Locked apps code
-        apps.setPrefWidth(700);
+        apps.setPrefWidth(500);
+        apps.setPrefHeight(250);
         apps.setItems(appNames);
         lockedAppsExplanation = new Text("Select the apps you would like to lock below. Hold Ctrl while clicking to select multiple apps.");
 
@@ -175,12 +173,6 @@ public class Settings extends Application {
             AnchorPane root = new AnchorPane(categories, appSettings);
             AnchorPane.setLeftAnchor(appSettings, 360.0);
             stage.getScene().setRoot(root);
-
-            Timeline killProcessLoop = new Timeline(new KeyFrame(Duration.seconds(1), d-> {
-                selectedLockList.killProcesses();
-            }));
-            killProcessLoop.setCycleCount(Timeline.INDEFINITE);
-            killProcessLoop.play();
         });
     }
 

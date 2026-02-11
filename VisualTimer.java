@@ -1,3 +1,9 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import javafx.animation.*;
 import javafx.application.Application;
 import javafx.geometry.*;
@@ -20,7 +26,9 @@ public class VisualTimer extends Application {
     private Button startButton, pauseButton, resetButton, setButton, plusButton, minusButton;
     private BorderPane root;
     private WelcomeScreen welcomeScreen;
-
+    private ArrayList<String> selectedApps = new ArrayList<String>();
+    private HashMap<String, String> nameToPath;
+    private LockList selectedLockList = new LockList();
     public VisualTimer(WelcomeScreen w) {
         welcomeScreen = w;
     }
@@ -29,6 +37,24 @@ public class VisualTimer extends Application {
 
     @Override
     public void start(Stage stage) {
+        try {
+            File f = new File("locklist.txt");
+            if (f.isFile()) {
+                BufferedReader br = new BufferedReader(new FileReader("locklist.txt"));
+                String line = br.readLine();
+                while (line != null) {
+                    line = line.strip();
+                    selectedApps.add(nameToPath.get(line));
+                    line = br.readLine();
+                }
+                br.close();
+            }
+        }
+        catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+        selectedLockList.setLockList(selectedApps);
+
 
         /* ================= BACKGROUND ================= */
 
@@ -72,7 +98,9 @@ public class VisualTimer extends Application {
                 if (timeLeft <= 10) {
                     timeLabel.setTextFill(Color.web("#ffcccc"));
                 }
-            } else {
+                selectedLockList.killProcesses();
+            } 
+            else {
                 timeline.stop();
                 pulse.stop();
 
@@ -209,5 +237,8 @@ public class VisualTimer extends Application {
     public void setWelcomeScreen (WelcomeScreen w)
     {
         welcomeScreen = w;
+    }
+    public void setNameToPath(HashMap<String, String> a) {
+        nameToPath = a;
     }
 }
