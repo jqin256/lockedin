@@ -1,15 +1,17 @@
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.application.Application;
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
+import javafx.scene.paint.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class VisualTimer extends Application {
+
     private int timeLeft; // seconds
     private Timeline timeline;
     private Label timeLabel;
@@ -18,27 +20,62 @@ public class VisualTimer extends Application {
     private Button startButton, pauseButton, resetButton, setButton, plusButton, minusButton;
     private BorderPane root;
     private WelcomeScreen welcomeScreen;
+
     public VisualTimer(WelcomeScreen w) {
         welcomeScreen = w;
     }
-    public VisualTimer() {
 
-    }
+    public VisualTimer() {}
+
     @Override
     public void start(Stage stage) {
-        // Main Label
+
+        /* ================= BACKGROUND ================= */
+
+        LinearGradient gradient = new LinearGradient(
+                0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
+                new Stop(0, Color.web("#2193b0")),
+                new Stop(1, Color.web("#6dd5ed"))
+        );
+
+        root = new BorderPane();
+        root.setBackground(new Background(
+                new BackgroundFill(gradient, CornerRadii.EMPTY, Insets.EMPTY)));
+
+        /* ================= TIMER LABEL ================= */
+
         timeLabel = new Label("00:00");
-        timeLabel.setFont(Font.font("Serif", 100));
-        timeLabel.setMinWidth(200);
+        timeLabel.setFont(Font.font("Segoe UI Semibold", 90));
+        timeLabel.setTextFill(Color.WHITE);
         timeLabel.setAlignment(Pos.CENTER);
 
-        // Timer logic
+        DropShadow glow = new DropShadow(25, Color.web("#ffffff80"));
+        timeLabel.setEffect(glow);
+
+        /* Pulse animation while running */
+        ScaleTransition pulse = new ScaleTransition(Duration.seconds(1.2), timeLabel);
+        pulse.setFromX(1.0);
+        pulse.setToX(1.04);
+        pulse.setFromY(1.0);
+        pulse.setToY(1.04);
+        pulse.setAutoReverse(true);
+        pulse.setCycleCount(Animation.INDEFINITE);
+
+        /* ================= TIMER LOGIC ================= */
+
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             if (timeLeft > 0) {
                 timeLeft--;
                 updateLabel();
+
+                // Turn red when under 10 seconds
+                if (timeLeft <= 10) {
+                    timeLabel.setTextFill(Color.web("#ffcccc"));
+                }
             } else {
                 timeline.stop();
+                pulse.stop();
+
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Time's Up!");
                 alert.setHeaderText(null);
@@ -48,59 +85,66 @@ public class VisualTimer extends Application {
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
 
-        // Controls
-        startButton = new Button("Start");
-        pauseButton = new Button("Pause");
-        resetButton = new Button("Reset");
+        /* ================= BUTTON STYLING ================= */
+
+        startButton = styledButton("Start", "#2ecc71");
+        pauseButton = styledButton("Pause", "#f1c40f");
+        resetButton = styledButton("Reset", "#e74c3c");
 
         startButton.setOnAction(e -> {
             if (timeLeft > 0 && timeline.getStatus() != Timeline.Status.RUNNING) {
                 timeline.play();
+                pulse.play();
             }
         });
 
-        pauseButton.setOnAction(e -> timeline.pause());
+        pauseButton.setOnAction(e -> {
+            timeline.pause();
+            pulse.pause();
+        });
 
         resetButton.setOnAction(e -> {
             timeline.stop();
+            pulse.stop();
             timeLeft = 0;
             updateLabel();
+            timeLabel.setTextFill(Color.WHITE);
         });
-        Button homeButton = new Button("Home");
-        homeButton.setOnAction(e -> {
-            welcomeScreen.start(stage);
-        });
-        HBox controlBox = new HBox(10, homeButton, startButton, pauseButton, resetButton);
-        controlBox.setAlignment(Pos.CENTER);
 
-        // Set Time Panel
+        Button homeButton = styledButton("Home", "#3498db");
+        homeButton.setOnAction(e -> welcomeScreen.start(stage));
+
+        HBox controlBox = new HBox(12, homeButton, startButton, pauseButton, resetButton);
+        controlBox.setAlignment(Pos.CENTER);
+        controlBox.setPadding(new Insets(15));
+
+        /* ================= SET TIME ================= */
+
         Label setLabel = new Label("Set (sec):");
+        setLabel.setTextFill(Color.WHITE);
+
         setTimeField = new TextField();
-        setTimeField.setPrefWidth(80);
-        setButton = new Button("Set");
-        HBox setBox = new HBox(10, setLabel, setTimeField, setButton);
-        setBox.setAlignment(Pos.CENTER);
+        setTimeField.setPrefWidth(90);
+
+        setButton = styledButton("Set", "#1abc9c");
 
         setButton.setOnAction(e -> {
             try {
-                int newTime = Integer.parseInt(setTimeField.getText());
-                timeLeft = newTime;
+                timeLeft = Integer.parseInt(setTimeField.getText());
                 updateLabel();
             } catch (NumberFormatException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Invalid Input");
-                alert.setHeaderText(null);
-                alert.setContentText("Please enter a valid number!");
-                alert.showAndWait();
+                new Alert(Alert.AlertType.ERROR, "Enter a valid number").show();
             }
         });
 
-        // Adjustment Panel
-        plusButton = new Button("+1 min");
-        minusButton = new Button("-1 min");
-        VBox adjustBox = new VBox(10, plusButton, minusButton);
-        adjustBox.setAlignment(Pos.CENTER_RIGHT);
-        adjustBox.setPadding(new Insets(10));
+        HBox setBox = new HBox(10, setLabel, setTimeField, setButton);
+        setBox.setAlignment(Pos.CENTER);
+        setBox.setPadding(new Insets(10));
+
+        /* ================= ADJUST ================= */
+
+        plusButton = styledButton("+1 min", "#16a085");
+        minusButton = styledButton("-1 min", "#16a085");
 
         plusButton.setOnAction(e -> {
             timeLeft += 60;
@@ -108,28 +152,52 @@ public class VisualTimer extends Application {
         });
 
         minusButton.setOnAction(e -> {
-            if (timeLeft >= 60) {
-                timeLeft -= 60;
-            } else {
-                timeLeft = 0;
-                timeline.stop();
-            }
+            timeLeft = Math.max(0, timeLeft - 60);
             updateLabel();
         });
 
-        // Layout
-        root = new BorderPane();
+        VBox adjustBox = new VBox(12, plusButton, minusButton);
+        adjustBox.setAlignment(Pos.CENTER_RIGHT);
+        adjustBox.setPadding(new Insets(10));
+
+        /* ================= LAYOUT ================= */
+
         root.setCenter(timeLabel);
         root.setBottom(controlBox);
         root.setTop(setBox);
         root.setRight(adjustBox);
-        BorderPane.setMargin(controlBox, new Insets(10));
-        BorderPane.setMargin(setBox, new Insets(10));
 
-        Scene scene = new Scene(root, 350, 250);
-        stage.setTitle("Visual Timer");
+        Scene scene = new Scene(root, 420, 300);
+        stage.setTitle("LockedIn Timer");
         stage.setScene(scene);
         stage.show();
+    }
+
+    /* ================= HELPERS ================= */
+
+    private Button styledButton(String text, String color) {
+        Button b = new Button(text);
+        b.setFont(Font.font("Segoe UI", 14));
+        b.setTextFill(Color.WHITE);
+        b.setPadding(new Insets(8, 18, 8, 18));
+
+        b.setBackground(new Background(new BackgroundFill(
+                Color.web(color), new CornerRadii(14), Insets.EMPTY)));
+
+        DropShadow shadow = new DropShadow(10, Color.rgb(0, 0, 0, 0.3));
+        b.setEffect(shadow);
+
+        b.setOnMouseEntered(e -> scale(b, 1.05));
+        b.setOnMouseExited(e -> scale(b, 1.0));
+
+        return b;
+    }
+
+    private void scale(Button b, double v) {
+        ScaleTransition st = new ScaleTransition(Duration.millis(120), b);
+        st.setToX(v);
+        st.setToY(v);
+        st.play();
     }
 
     private void updateLabel() {
@@ -138,10 +206,8 @@ public class VisualTimer extends Application {
         timeLabel.setText(String.format("%02d:%02d", minutes, seconds));
     }
 
-    public BorderPane getRoot() {
-        return root;
-    }
-    public void setWelcomeScreen (WelcomeScreen w) {
+    public void setWelcomeScreen (WelcomeScreen w)
+    {
         welcomeScreen = w;
     }
 }
