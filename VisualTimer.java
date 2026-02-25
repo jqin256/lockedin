@@ -38,12 +38,12 @@ public class VisualTimer extends Application {
     @Override
     public void start(Stage stage) {
         try {
-            File f = new File("locklist.txt");
+            File f = new File("data\\locklist.txt");
             if (f.isFile()) {
-                BufferedReader br = new BufferedReader(new FileReader("locklist.txt"));
+                BufferedReader br = new BufferedReader(new FileReader("data\\locklist.txt"));
                 String line = br.readLine();
                 while (line != null) {
-                    line = line.strip();
+                    line = line.trim();
                     selectedApps.add(nameToPath.get(line));
                     line = br.readLine();
                 }

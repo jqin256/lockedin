@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.layout.*;
 import javafx.scene.control.*;
 import javafx.stage.*;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.scene.text.*;
 import javafx.scene.shape.*;
 import javafx.scene.*;
@@ -11,6 +12,8 @@ import javafx.collections.*;
 import java.util.*;
 import java.io.*;
 import javafx.collections.transformation.*;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.Media;
 
 public class Settings extends Application {
     private WelcomeScreen welcomeScreen;
@@ -21,7 +24,6 @@ public class Settings extends Application {
 
     }
     @FXML
-    private Button general, lockedApps;
     private Text themeText, lockedAppsExplanation;
     private MenuButton themeMenuButton;
     private String theme;
@@ -34,6 +36,7 @@ public class Settings extends Application {
     private HashMap<String, String> nameToPath;
     private String[] banList = {".", "Update", "Setup", "Install", "Driver", "Service", "Utility", "Uninstall", "?", "Extension"};
     private TreeSet<String> selectedAppNames;
+    private ObservableList<MediaPlayer> playlist;
     public void start(Stage stage) {
         themeText = new Text("Background Theme");
         MenuItem lightTheme = new MenuItem("Light");
@@ -59,11 +62,12 @@ public class Settings extends Application {
 
         Button genButton = new Button("General");
         Button appsButton = new Button("Locked Apps");
+        Button musicButton = new Button("Music");
         Button homeButton = new Button("Home");
         homeButton.setOnAction(e -> {
             welcomeScreen.start(stage);
         });
-        categories = new VBox(4, homeButton, genButton, appsButton);
+        categories = new VBox(4, homeButton, genButton, appsButton, musicButton);
         AnchorPane.setTopAnchor(categories, 20.0);
         AnchorPane.setLeftAnchor(categories, 10.0);
         AnchorPane.setLeftAnchor(genSettings, 360.0);
@@ -90,12 +94,12 @@ public class Settings extends Application {
             appNames.setPredicate(s -> s.toLowerCase().contains(newValue.toLowerCase().trim()));
         });
         try {
-            File f = new File("locklist.txt");
+            File f = new File("data\\locklist.txt");
             if (f.isFile()) {
-                BufferedReader br = new BufferedReader(new FileReader("locklist.txt"));
+                BufferedReader br = new BufferedReader(new FileReader("data\\locklist.txt"));
                 String line = br.readLine();
                 while (line != null) {
-                    line = line.strip();
+                    line = line.trim();
                     apps.getSelectionModel().select(line);
                     selectedAppNames.add(line);
                     selectedApps.add(nameToPath.get(line));
@@ -114,7 +118,7 @@ public class Settings extends Application {
             ObservableList<String> selectedItems =  apps.getSelectionModel().getSelectedItems();
             selectedApps = new ArrayList<String>();
             try {
-                FileWriter fWriter = new FileWriter("locklist.txt", false);
+                FileWriter fWriter = new FileWriter("data\\locklist.txt", false);
                 for (String s: selectedItems) {
                     selectedAppNames.add(s);
                 }
@@ -146,7 +150,7 @@ public class Settings extends Application {
             selectedAppView.setItems(FXCollections.observableArrayList(selectedAppNames));
             selectedLockList.setLockList(selectedApps);
             try {
-                FileWriter fWriter = new FileWriter("locklist.txt", false);
+                FileWriter fWriter = new FileWriter("data\\locklist.txt", false);
                 Spliterator<String> it = selectedAppNames.spliterator();
                 while (it.tryAdvance(name -> {
                     try {
@@ -166,6 +170,19 @@ public class Settings extends Application {
 
         VBox appSettings = new VBox(4.0, lockedAppsExplanation, apps, searchBar, selectedAppView);
 
+        //add music / create playlists
+        Button browseMusic = new Button("Browse...");
+        browseMusic.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Browse...");
+            fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Audio Files", "*.wav", "*.mp3"));
+            fileChooser.setInitialDirectory(new File(System.getProperty("user.home").toString() + "\\Music"));
+            List<File> selectedMedia = fileChooser.showOpenMultipleDialog(stage);
+
+        });
+
+        VBox musicSettings = new VBox(4.0, browseMusic);
+
         genButton.setOnAction(e -> {
             stage.getScene().setRoot(new AnchorPane(categories, genSettings));
         });
@@ -173,6 +190,12 @@ public class Settings extends Application {
             AnchorPane root = new AnchorPane(categories, appSettings);
             AnchorPane.setLeftAnchor(appSettings, 360.0);
             stage.getScene().setRoot(root);
+        });
+        musicButton.setOnAction(e -> {
+            AnchorPane root = new AnchorPane(categories, musicSettings);
+            AnchorPane.setLeftAnchor(musicSettings, 360.0);
+            stage.getScene().setRoot(root);
+            
         });
     }
 

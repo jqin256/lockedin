@@ -14,8 +14,8 @@ public class BackgroundMusic {
                 return; // Prevent multiple players from starting
             }
 
-            // ABSOLUTE PATH to audio file
-            String musicPath = "C:\\Users\\Rithik_DHS\\Downloads\\prodappmusic.mp3";
+            //relative path to audio file
+            String musicPath = "music\\prodappmusic.mp3";
 
             Media sound = new Media(new File(musicPath).toURI().toString());
             mediaPlayer = new MediaPlayer(sound); 
