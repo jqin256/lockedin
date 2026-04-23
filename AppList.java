@@ -1,6 +1,3 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Spliterator;
 import java.util.TreeSet;
@@ -13,7 +10,7 @@ public class AppList{
     private ArrayList<String> appPaths = new ArrayList<String>();
     private TreeSet<String> checkedPaths = new TreeSet<String>();
     private TreeSet<String> checkedNames = new TreeSet<String>();
-    private HashMap<String, String> nameToPath = new HashMap<String, String>();
+    private HashMap<String, ArrayList<String>> nameToPath = new HashMap<String, ArrayList<String>>();
     public AppList() {
         
     }
@@ -46,7 +43,6 @@ public class AppList{
                     while (line != null) {
                         appPaths.add(line);
                         line = exeInput.readLine();
-
                     }
                     exeFilesProcess.waitFor();
                     exeInput.close();
@@ -61,6 +57,7 @@ public class AppList{
 
     public void retrieveAppNames() {
         Process itemPropertiesProcess;
+        ArrayList<String> pathsForName;
         try {
             for (String s: appPaths) {
                 if (!checkedPaths.contains(s)) {
@@ -68,17 +65,19 @@ public class AppList{
                     itemPropertiesProcess = Runtime.getRuntime().exec(getItemProperties);
                     BufferedReader propInput = new BufferedReader(new InputStreamReader(itemPropertiesProcess.getInputStream()));
                     String line = propInput.readLine();
-                    String appName;
+                    String appName = "";
                     while (line != null) {
-                        appName = line.substring(line.indexOf(":") + 2).trim();
-                        if (line.indexOf(":") - line.indexOf("Product") == 7 && !line.trim().equals("Product:") && !checkedNames.contains(appName)) {
-                            appNames.add(appName);
+                        if (line.indexOf(":") != -1) appName = line.substring(line.indexOf(":") + 2).trim();
+                        if (line.indexOf(":") - line.indexOf("Product") == 7 && !line.trim().equals("Product:")) {
                             checkedNames.add(appName);
-                            nameToPath.put(appName, s);
+                            if (nameToPath.containsKey(appName)) pathsForName = nameToPath.get(appName);
+                            else pathsForName = new ArrayList<String>();
+                            pathsForName.add(s);
+                            nameToPath.put(appName, pathsForName);
                         }
-                        checkedPaths.add(s);
                         line = propInput.readLine();
                     }
+                    checkedPaths.add(s);
                     itemPropertiesProcess.waitFor();
                     propInput.close();
                 }
@@ -91,7 +90,7 @@ public class AppList{
 
     public void saveCheckedNames() {
         try {
-            FileWriter fWriter = new FileWriter("data\\checkednames.txt", false);
+            FileWriter fWriter = new FileWriter(System.getProperty("user.dir") + "\\data\\checkednames.txt", false);
             Spliterator<String> it = checkedNames.spliterator();
             while (it.tryAdvance(name -> {
                 try {
@@ -110,7 +109,7 @@ public class AppList{
 
     public void saveCheckedPaths() {
         try {
-            FileWriter fWriter = new FileWriter("data\\checkedpaths.txt", false);
+            FileWriter fWriter = new FileWriter(System.getProperty("user.dir") + "\\data\\checkedpaths.txt", false);
             Spliterator<String> it = checkedPaths.spliterator();
             while (it.tryAdvance(path -> {
                 try {
@@ -129,11 +128,14 @@ public class AppList{
 
     public void saveCheckedApps() {
         try {
-            FileWriter fWriter = new FileWriter("data\\checkedapps.txt", false);
+            FileWriter fWriter = new FileWriter(System.getProperty("user.dir") + "\\data\\checkedapps.txt", false);
             Spliterator<String> it = checkedNames.spliterator();
             while (it.tryAdvance(name -> {
                 try {
-                    fWriter.write(nameToPath.get(name) + "|" + name + "\n");
+                    ArrayList<String> pathsForName = nameToPath.get(name);
+                    for (String s: pathsForName) {
+                        fWriter.write(s + "|" + name + "\n");
+                    }
                 }
                 catch (IOException e) {
                     e.printStackTrace();
@@ -148,11 +150,17 @@ public class AppList{
 
     public void loadCheckedApps() {
         try {
-            BufferedReader input = new BufferedReader(new FileReader("data\\checkedapps.txt"));
+            BufferedReader input = new BufferedReader(new FileReader(System.getProperty("user.dir") + "\\data\\checkedapps.txt"));
             String line = input.readLine();
+            ArrayList<String> pathsForName;
             while (line != null) {
                 line = line.trim();
-                nameToPath.put(line.substring(line.indexOf("|") + 1), line.substring(0, line.indexOf("|")));
+                String name = line.substring(line.indexOf("|") + 1);
+                String path = line.substring(0, line.indexOf("|"));
+                if (nameToPath.containsKey(name)) pathsForName = nameToPath.get(name);
+                else pathsForName = new ArrayList<String>();
+                pathsForName.add(path);
+                nameToPath.put(name, pathsForName);
                 line = input.readLine();
             }
             input.close();
@@ -164,11 +172,10 @@ public class AppList{
 
     public void loadCheckedNames() {
         try {
-            BufferedReader input = new BufferedReader(new FileReader("data\\checkednames.txt"));
+            BufferedReader input = new BufferedReader(new FileReader(System.getProperty("user.dir") + "\\data\\checkednames.txt"));
             String line = input.readLine();
             while (line != null) {
                 line = line.trim();
-                appNames.add(line);
                 checkedNames.add(line);
                 line = input.readLine();
             }
@@ -181,7 +188,7 @@ public class AppList{
 
     public void loadCheckedPaths() {
         try {
-            BufferedReader input = new BufferedReader(new FileReader("data\\checkedpaths.txt"));
+            BufferedReader input = new BufferedReader(new FileReader(System.getProperty("user.dir") + "\\data\\checkedpaths.txt"));
             String line = input.readLine();
             while (line != null) {
                 line = line.trim();
@@ -200,9 +207,13 @@ public class AppList{
         return appPaths;
     }
     public ArrayList<String> getAppNames() {
+        Spliterator<String> it = checkedNames.spliterator();
+        while (it.tryAdvance(name -> {
+            appNames.add(name);
+        }));
         return appNames;
     }
-    public HashMap<String, String> getNameToPath() {
+    public HashMap<String, ArrayList<String>> getNameToPath() {
         return nameToPath;
     }
 }
