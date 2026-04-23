@@ -1,26 +1,24 @@
-
 import java.util.ArrayList;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.media.MediaPlayer;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import java.io.*;
 
 public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         AppList appList = new AppList();
-        appList.retrieveAppNames();
-        appList.retrieveAppPaths();
-        File f1 = new File("checkedapps.txt");
-        File f2 = new File("checkednames.txt");
-        File f3 = new File("checkedpaths.txt");
+        File f1 = new File(System.getProperty("user.dir") + "\\data\\checkedapps.txt");
+        File f2 = new File(System.getProperty("user.dir") + "\\data\\checkednames.txt");
+        File f3 = new File(System.getProperty("user.dir") + "\\data\\checkedpaths.txt");
         if (f1.isFile() && f2.isFile() && f3.isFile()) {
             appList.loadCheckedPaths();
             appList.loadCheckedNames();
             appList.loadCheckedApps();
         }
+        appList.retrieveAppPaths();
+        appList.retrieveAppNames();
         appList.saveCheckedPaths();
         appList.saveCheckedNames();
         appList.saveCheckedApps();
@@ -39,6 +37,8 @@ public class Main extends Application {
         settingsPage.setWelcomeScreen(welcomeScreen);
         timerApp.setWelcomeScreen(welcomeScreen);
         BackgroundMusic.playMusic();
+        primaryStage.hide();
+        primaryStage.initStyle(StageStyle.DECORATED);
         welcomeScreen.start(primaryStage);
     }
 

@@ -1,25 +1,32 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+
 import javafx.animation.*;
 import javafx.application.Application;
 import javafx.geometry.*;
 import javafx.scene.Scene;
+import javafx.scene.shape.*;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.text.Font;
-import javafx.stage.Stage;
-import javafx.util.Duration;
+import javafx.stage.*;
+import javafx.collections.transformation.*;
+import javafx.collections.*;
+import javafx.scene.image.*;
+import javafx.util.*;
+import java.util.*;
+
 
 public class VisualTimer extends Application {
 
     private int timeLeft; // seconds
     private Timeline timeline;
+    private Timeline killProcessThread;
     private Label timeLabel;
     private TextField setTimeField;
 
@@ -27,8 +34,14 @@ public class VisualTimer extends Application {
     private BorderPane root;
     private WelcomeScreen welcomeScreen;
     private ArrayList<String> selectedApps = new ArrayList<String>();
-    private HashMap<String, String> nameToPath;
+    private HashMap<String, ArrayList<String>> nameToPath;
     private LockList selectedLockList = new LockList();
+    private FilteredList<String> playlistNames;
+    private ListView<String> playlistView = new ListView<String>();
+    private final Color playlistBoxBaseColor = Color.web("#202020");
+    private File selectedPlaylistDir;
+    private long elapsedTime;
+    private HashSet<String> selectedAppSet = new HashSet<String>();
     public VisualTimer(WelcomeScreen w) {
         welcomeScreen = w;
     }
@@ -38,13 +51,16 @@ public class VisualTimer extends Application {
     @Override
     public void start(Stage stage) {
         try {
-            File f = new File("data\\locklist.txt");
+            File f = new File(System.getProperty("user.dir") + "\\data\\locklist.txt");
             if (f.isFile()) {
-                BufferedReader br = new BufferedReader(new FileReader("data\\locklist.txt"));
+                BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.dir") + "\\data\\locklist.txt"));
                 String line = br.readLine();
                 while (line != null) {
                     line = line.trim();
-                    selectedApps.add(nameToPath.get(line));
+                    ArrayList<String> pathsForName = nameToPath.get(line);
+                    for (String s: pathsForName) {
+                        selectedAppSet.add(s);
+                    }
                     line = br.readLine();
                 }
                 br.close();
@@ -53,8 +69,97 @@ public class VisualTimer extends Application {
         catch (IOException e) {
             System.err.println(e.getMessage());
         }
-        selectedLockList.setLockList(selectedApps);
+        selectedLockList.setLockList(selectedAppSet);
 
+        //playlist loading
+        File playlistPath = new File(System.getProperty("user.dir") + "\\music");
+        ObservableList<String> observablePlaylistNames = FXCollections.observableArrayList();
+        String[] directories = playlistPath.list(new FilenameFilter() {
+            @Override public boolean accept(File curr, String name) {
+                return new File(curr, name).isDirectory();
+            }
+        });
+
+        for (String s: directories) {
+            while (s.indexOf("\\") >= 0) {
+                s = s.substring(s.indexOf("\\") + 1);
+            }
+            observablePlaylistNames.add(s);
+        }
+        playlistNames = new FilteredList<String>(observablePlaylistNames);
+
+        TextField searchBar = new TextField();
+        searchBar.setPromptText("Search here:");
+        searchBar.textProperty().addListener((obs, oldValue, newValue) -> {
+            playlistNames.setPredicate(s -> s.toLowerCase().contains(newValue.toLowerCase().trim()));
+        });
+        searchBar.setStyle("-fx-text-fill: #ffffff");
+        
+        playlistView.setItems(playlistNames);
+        playlistView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        playlistView.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
+            @Override public ListCell<String> call(ListView<String> lsV) {
+                return new ColorfulCell(playlistBoxBaseColor);
+            }
+        });
+        
+        searchBar.setBackground(new Background(
+            new BackgroundFill(playlistBoxBaseColor.brighter().brighter(), CornerRadii.EMPTY, Insets.EMPTY)
+        ));
+        playlistView.setBackground(new Background(
+            new BackgroundFill(playlistBoxBaseColor.brighter(), CornerRadii.EMPTY, Insets.EMPTY)
+        ));
+
+        playlistView.setOnMouseClicked(e -> {
+            String name = playlistView.getSelectionModel().getSelectedItem();
+            selectedPlaylistDir = new File(System.getProperty("user.dir") + "\\music\\" + name);
+        });
+
+        VBox playlistSelect = new VBox(0, searchBar, playlistView);
+        playlistSelect.setBackground(new Background(
+            new BackgroundFill(playlistBoxBaseColor.brighter(), CornerRadii.EMPTY, Insets.EMPTY)
+        ));
+
+        Image playImage = new Image(getClass().getResourceAsStream("assets\\playbutton.png"));
+        ImageView playImageView = ivBuilder(playImage, true, 25, 25, true, true);
+
+        Image pauseImage = new Image(getClass().getResourceAsStream("assets\\pausebutton.png"));
+        ImageView pauseImageView = ivBuilder(pauseImage, true, 25, 25, true, true);
+
+        Image nextTrackImage = new Image(getClass().getResourceAsStream("assets\\nexttrack.png"));
+        ImageView nextTrackImageView = ivBuilder(nextTrackImage, true, 25, 25, true, true);
+
+        Image prevTrackImage = new Image(getClass().getResourceAsStream("assets\\prevtrack.png"));
+        ImageView prevTrackImageView = ivBuilder(prevTrackImage, true, 25, 25, true, true);
+        
+        HBox musicControlBox = new HBox(10.0, prevTrackImageView, playImageView, nextTrackImageView);
+        musicControlBox.setBorder(null);
+        musicControlBox.setBackground(Background.fill(playlistBoxBaseColor));
+        musicControlBox.setAlignment(Pos.CENTER);
+        musicControlBox.setMinWidth(30);
+        musicControlBox.setPadding(new Insets(8, 0, 8, 0));
+
+        playImageView.setOnMouseClicked(e -> {
+            musicControlBox.getChildren().remove(playImageView);
+            musicControlBox.getChildren().add(1 , pauseImageView);
+            BackgroundMusic.playPlaylist(selectedPlaylistDir, false);
+        });
+
+        pauseImageView.setOnMouseClicked(e -> {
+            musicControlBox.getChildren().remove(pauseImageView);
+            musicControlBox.getChildren().add(1 , playImageView);
+            elapsedTime = BackgroundMusic.pauseMusic();
+        });
+        
+        nextTrackImageView.setOnMouseClicked(e -> {
+            BackgroundMusic.setMove((short) 1);
+        });
+
+        prevTrackImageView.setOnMouseClicked(e -> {
+            BackgroundMusic.setMove((short) -1);
+        });
+
+        VBox playlistBox = new VBox(playlistSelect, musicControlBox);
 
         /* ================= BACKGROUND ================= */
 
@@ -67,7 +172,7 @@ public class VisualTimer extends Application {
         root = new BorderPane();
         root.setBackground(new Background(
                 new BackgroundFill(gradient, CornerRadii.EMPTY, Insets.EMPTY)));
-
+        
         /* ================= TIMER LABEL ================= */
 
         timeLabel = new Label("00:00");
@@ -98,7 +203,6 @@ public class VisualTimer extends Application {
                 if (timeLeft <= 10) {
                     timeLabel.setTextFill(Color.web("#ffcccc"));
                 }
-                selectedLockList.killProcesses();
             } 
             else {
                 timeline.stop();
@@ -113,6 +217,15 @@ public class VisualTimer extends Application {
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
 
+        killProcessThread = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            if (timeLeft > 0) {
+                selectedLockList.killProcesses();
+            }
+            else {
+                killProcessThread.stop();
+            }
+        }));
+
         /* ================= BUTTON STYLING ================= */
 
         startButton = styledButton("Start", "#2ecc71");
@@ -123,24 +236,30 @@ public class VisualTimer extends Application {
             if (timeLeft > 0 && timeline.getStatus() != Timeline.Status.RUNNING) {
                 timeline.play();
                 pulse.play();
+                killProcessThread.play();
             }
         });
 
         pauseButton.setOnAction(e -> {
             timeline.pause();
             pulse.pause();
+            killProcessThread.pause();
         });
 
         resetButton.setOnAction(e -> {
             timeline.stop();
             pulse.stop();
+            killProcessThread.stop();
             timeLeft = 0;
             updateLabel();
             timeLabel.setTextFill(Color.WHITE);
         });
 
         Button homeButton = styledButton("Home", "#3498db");
-        homeButton.setOnAction(e -> welcomeScreen.start(stage));
+        homeButton.setOnAction(e -> {
+            welcomeScreen.start(stage);
+            BackgroundMusic.stopMusic();
+        });
 
         HBox controlBox = new HBox(12, homeButton, startButton, pauseButton, resetButton);
         controlBox.setAlignment(Pos.CENTER);
@@ -194,8 +313,8 @@ public class VisualTimer extends Application {
         root.setBottom(controlBox);
         root.setTop(setBox);
         root.setRight(adjustBox);
-
-        Scene scene = new Scene(root, 420, 300);
+        root.setLeft(playlistBox);
+        Scene scene = new Scene(root, 560, 480);
         stage.setTitle("LockedIn Timer");
         stage.setScene(scene);
         stage.show();
@@ -234,11 +353,21 @@ public class VisualTimer extends Application {
         timeLabel.setText(String.format("%02d:%02d", minutes, seconds));
     }
 
+    private ImageView ivBuilder(Image image, boolean preserveRatio, int height, int width, boolean smooth, boolean cache) {
+        ImageView iv = new ImageView(image);
+        iv.setPreserveRatio(preserveRatio);
+        iv.setFitHeight(height);
+        iv.setFitWidth(width);
+        iv.setSmooth(smooth);
+        iv.setCache(cache);
+        return iv;
+    }
+
     public void setWelcomeScreen (WelcomeScreen w)
     {
         welcomeScreen = w;
     }
-    public void setNameToPath(HashMap<String, String> a) {
+    public void setNameToPath(HashMap<String, ArrayList<String>> a) {
         nameToPath = a;
     }
 }
