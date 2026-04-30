@@ -7,7 +7,7 @@ import javafx.scene.control.*;
 import javafx.stage.*;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.scene.text.*;
-import javafx.scene.shape.*;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.*;
 import javafx.collections.*;
 import java.util.*;
@@ -16,6 +16,8 @@ import java.io.*;
 import javafx.collections.transformation.*;
 import javafx.scene.paint.Color;
 import javafx.geometry.Rectangle2D;
+import java.nio.file.FileSystems;
+import java.nio.file.*;
 
 public class Settings extends Application {
     private WelcomeScreen welcomeScreen;
@@ -27,11 +29,9 @@ public class Settings extends Application {
     }
     @FXML
     private Text themeText, lockedAppsExplanation;
-    private MenuButton themeMenuButton;
-    private String theme;
     private LockList selectedLockList = new LockList();
     private FilteredList<String> appNames;
-    private VBox categories, genSettings;
+    private VBox categories;
     private HashSet<String> selectedAppSet = new HashSet<String>();
     private ListView<String> apps = new ListView<String>();
     private ListView<String> selectedAppView = new ListView<String>();
@@ -44,31 +44,6 @@ public class Settings extends Application {
         //used for all subheader text within each settings category
         Font textFont = Font.font("Segoe UI Semibold", 18);
 
-        themeText = new Text("Background Theme");
-        themeText.setFont(textFont);
-        themeText.setFill(Color.WHITE);
-        MenuItem lightTheme = new MenuItem("Light");
-        theme = "Light";
-        MenuItem darkTheme = new MenuItem("Dark");
-
-        MenuItem[] themeMenu = {lightTheme, darkTheme};
-        themeMenuButton = settingsStyledMenuButton(theme, "#1b7b93", themeMenu);
-        themeMenuButton.setOnAction(e -> {
-            themeMenuButton.show();
-        });
-        
-        lightTheme.setOnAction(e -> {
-            themeMenuButton.setText("Light");
-            theme = "Light";
-        });
-        darkTheme.setOnAction(e -> {
-            themeMenuButton.setText("Dark");
-            theme = "Dark";
-        });
-
-        genSettings = new VBox(4, themeText, themeMenuButton);
-
-        Button genButton = settingsStyledButton("General", "#2193b0");
         Button appsButton = settingsStyledButton("Locked Apps", "#2193b0");
         Button musicButton = settingsStyledButton("Music", "#2193b0");
         Button homeButton = settingsStyledButton("Home", "#2193b0");
@@ -266,16 +241,13 @@ public class Settings extends Application {
             if (selectedMedia != null) {
                 for (File f: selectedMedia) {
                     for (String s: playlistView.getSelectionModel().getSelectedItems()) {
-                        String pathString = f.toString();
-                        while (pathString.indexOf("\\") >= 0) {
-                            pathString = pathString.substring(pathString.indexOf("\\") + 1);
-                        }
-                        File f2 = new File("music\\" + s + "\\" + pathString);
+                        Path dest = FileSystems.getDefault().getPath(System.getProperty("user.dir"), "music", s, f.getName()); 
+                        Path source = FileSystems.getDefault().getPath(f.getAbsolutePath());
                         try {
-                            f2.createNewFile();
+                            Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
                         }
-                        catch(IOException error) {
-                            System.err.println(error.getMessage());
+                        catch (IOException error) {
+                            System.err.println(error);
                         }
                     }
                 }
@@ -299,15 +271,8 @@ public class Settings extends Application {
         categoryBackground.setWidth(220);
         categoryBackground.setHeight(screenBounds.getHeight());
         categoryBackground.setFill(Color.web("#2193b0").darker().darker());
-        categories = new VBox(homeButton, genButton, appsButton, musicButton);
+        categories = new VBox(homeButton, appsButton, musicButton);
 
-        genButton.setOnAction(e -> {
-            AnchorPane r = new AnchorPane(categories, categoryBackground, genSettings);
-            categoryBackground.toBack();
-            AnchorPane.setLeftAnchor(genSettings, 360.0);
-            setRootGUI(r, categories, genSettings);
-            stage.getScene().setRoot(r);
-        });
         appsButton.setOnAction(e -> {
             AnchorPane r = new AnchorPane(categories, categoryBackground, appSettings);
             categoryBackground.toBack();
@@ -323,9 +288,9 @@ public class Settings extends Application {
             stage.getScene().setRoot(r);
         });
 
-        AnchorPane root = new AnchorPane(categories, categoryBackground, genSettings);
+        AnchorPane root = new AnchorPane(categories, categoryBackground, appSettings);
         categoryBackground.toBack();
-        setRootGUI(root, categories, genSettings);
+        setRootGUI(root, categories, appSettings);
         Scene genScene = new Scene(root, 1080, 720);
         
         stage.setTitle("Settings");
@@ -391,27 +356,6 @@ public class Settings extends Application {
                 Color.web(c).darker(), new CornerRadii(0), Insets.EMPTY)));
         });
 
-        return b;
-    }
-
-    private MenuButton settingsStyledMenuButton(String s, String c, MenuItem[] m) {
-        MenuButton b = new MenuButton(s, new Rectangle(), m);
-
-        b.setFont(Font.font("Segoe UI", 14));
-        b.setTextFill(Color.WHITE);
-
-        b.setBackground(new Background(new BackgroundFill(
-                Color.web(c), new CornerRadii(14), Insets.EMPTY)));
-
-        b.setOnMouseEntered(e -> {
-            b.setBackground(new Background(new BackgroundFill(
-                Color.web(c).darker(), new CornerRadii(14), Insets.EMPTY)));
-        });
-        b.setOnMouseExited(e -> {
-            b.setBackground(new Background(new BackgroundFill(
-                Color.web(c), new CornerRadii(14), Insets.EMPTY)));
-        });
-        
         return b;
     }
 }

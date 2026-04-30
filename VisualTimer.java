@@ -7,8 +7,7 @@ import java.io.IOException;
 import javafx.animation.*;
 import javafx.application.Application;
 import javafx.geometry.*;
-import javafx.scene.Scene;
-import javafx.scene.shape.*;
+import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
@@ -33,20 +32,21 @@ public class VisualTimer extends Application {
     private Button startButton, pauseButton, resetButton, setButton, plusButton, minusButton;
     private BorderPane root;
     private WelcomeScreen welcomeScreen;
-    private ArrayList<String> selectedApps = new ArrayList<String>();
     private HashMap<String, ArrayList<String>> nameToPath;
     private LockList selectedLockList = new LockList();
     private FilteredList<String> playlistNames;
     private ListView<String> playlistView = new ListView<String>();
     private final Color playlistBoxBaseColor = Color.web("#202020");
     private File selectedPlaylistDir;
-    private long elapsedTime;
+    private long elapsedTime = 0;
     private HashSet<String> selectedAppSet = new HashSet<String>();
     public VisualTimer(WelcomeScreen w) {
         welcomeScreen = w;
     }
 
-    public VisualTimer() {}
+    public VisualTimer() {
+
+    }
 
     @Override
     public void start(Stage stage) {
@@ -111,7 +111,7 @@ public class VisualTimer extends Application {
         ));
 
         playlistView.setOnMouseClicked(e -> {
-            String name = playlistView.getSelectionModel().getSelectedItem();
+            String name = playlistView.getSelectionModel().getSelectedItem().trim();
             selectedPlaylistDir = new File(System.getProperty("user.dir") + "\\music\\" + name);
         });
 
@@ -152,11 +152,11 @@ public class VisualTimer extends Application {
         });
         
         nextTrackImageView.setOnMouseClicked(e -> {
-            BackgroundMusic.setMove((short) 1);
+            BackgroundMusic.changeTrack(true);
         });
 
         prevTrackImageView.setOnMouseClicked(e -> {
-            BackgroundMusic.setMove((short) -1);
+            BackgroundMusic.changeTrack(false);
         });
 
         VBox playlistBox = new VBox(playlistSelect, musicControlBox);
@@ -203,6 +203,7 @@ public class VisualTimer extends Application {
                 if (timeLeft <= 10) {
                     timeLabel.setTextFill(Color.web("#ffcccc"));
                 }
+                selectedLockList.killProcesses();
             } 
             else {
                 timeline.stop();
@@ -219,7 +220,6 @@ public class VisualTimer extends Application {
 
         killProcessThread = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             if (timeLeft > 0) {
-                selectedLockList.killProcesses();
             }
             else {
                 killProcessThread.stop();
@@ -340,8 +340,8 @@ public class VisualTimer extends Application {
         return b;
     }
 
-    private void scale(Button b, double v) {
-        ScaleTransition st = new ScaleTransition(Duration.millis(120), b);
+    private void scale(Node n, double v) {
+        ScaleTransition st = new ScaleTransition(Duration.millis(120), n);
         st.setToX(v);
         st.setToY(v);
         st.play();
@@ -360,6 +360,12 @@ public class VisualTimer extends Application {
         iv.setFitWidth(width);
         iv.setSmooth(smooth);
         iv.setCache(cache);
+
+        DropShadow shadow = new DropShadow(10, Color.rgb(0, 0, 0, 0.3));
+        iv.setEffect(shadow);
+
+        iv.setOnMouseEntered(e -> scale(iv, 1.05));
+        iv.setOnMouseExited(e -> scale(iv, 1.0));
         return iv;
     }
 

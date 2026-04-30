@@ -4,13 +4,13 @@ import java.io.File;
 import java.util.concurrent.*;
 
 public class BackgroundMusic {
-    
     private static MediaPlayer mediaPlayer;
     private static Media currMedia;
     private static long currElapsedTime;
     private static long currStartTime;
     private static short move = 0;
-
+    private static int playlistIndex = 0;
+    private static File selectedDirectory;
     public static void playMusic() {
         try {
             if (mediaPlayer != null) {
@@ -18,8 +18,7 @@ public class BackgroundMusic {
             }
 
             //relative path to audio file
-            String musicPath = "music\\prodappmusic.mp3";
-
+            String musicPath = System.getProperty("user.dir") + "\\music\\prodappmusic.mp3";
             Media sound = new Media(new File(musicPath).toURI().toString());
             mediaPlayer = new MediaPlayer(sound); 
 
@@ -34,32 +33,32 @@ public class BackgroundMusic {
     }
 
     public static void playPlaylist(File dir, boolean repeat) {
-        mediaPlayer.stop();
-        do {
-            for (int i = 0; i < dir.listFiles().length; ++i) {
-                File f = dir.listFiles()[i];
-                if (f.isFile()) {
-                    currMedia = new Media(f.toURI().toString());
-                    mediaPlayer = new MediaPlayer(currMedia);
-                    mediaPlayer.setCycleCount(1);
+        if (mediaPlayer != null)
+            mediaPlayer.stop();
+        
+        playlistIndex = 0;
+        selectedDirectory = dir;
+
+        setNewMedia(selectedDirectory);
+        //mediaPlayer.stop();
+        mediaPlayer.setOnReady(new Runnable(){
+            public void run() {
+                mediaPlayer.play();
+            }
+        });
+        mediaPlayer.setOnEndOfMedia(new Runnable() {
+            public void run() {
+                if (playlistIndex < selectedDirectory.length()) {
+                    playlistIndex += 1;
+                    setNewMedia(selectedDirectory);
                     mediaPlayer.play();
-                    currStartTime = System.nanoTime();
-                    while (mediaPlayer.getCurrentCount() < 1) {
-                        if (move == 1) {
-                            break;
-                        }
-                        else if (move == -1) {
-                            i -= 2;
-                            break;
-                        }
-                        currElapsedTime = System.nanoTime() - currStartTime;
-                    };
-                    move = 0;
+                }
+                else {
                     mediaPlayer.stop();
+                    return;
                 }
             }
-
-        } while(repeat);
+        });
     }
 
     public static long pauseMusic() {
@@ -71,8 +70,18 @@ public class BackgroundMusic {
         return currElapsedTime;
     }
 
-    public static void setMove(short x) {
-        move = x;
+    public static void changeTrack(boolean forward) {
+        if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING || mediaPlayer.getStatus() == MediaPlayer.Status.PAUSED) {
+            if (forward) 
+                playlistIndex++;
+            else 
+                playlistIndex--;
+
+            if (playlistIndex < selectedDirectory.length()) 
+                setNewMedia(selectedDirectory);
+            else
+                mediaPlayer.stop();
+        }
     }
 
     public static void stopMusic() {
@@ -80,6 +89,16 @@ public class BackgroundMusic {
             mediaPlayer.stop();
             mediaPlayer.dispose();
             mediaPlayer = null;
+        }
+    }
+    
+    private static void setNewMedia(File dir) {
+        File f = dir.listFiles()[playlistIndex];
+        if (f.isFile()) {
+            currMedia = new Media(f.toURI().toString());
+            mediaPlayer = new MediaPlayer(currMedia);
+            mediaPlayer.setCycleCount(1);
+            mediaPlayer.setVolume(1);
         }
     }
 }
